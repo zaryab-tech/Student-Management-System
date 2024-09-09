@@ -50,13 +50,6 @@ student_management/
 3. Authentication Module: 
    - User registration, login, and logout functionalities.
 
-### Installation:
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/student_management.git
-   cd student_management
-
 ##Setup Instructions:
 1- Create a virtual environment and activate it:
 
