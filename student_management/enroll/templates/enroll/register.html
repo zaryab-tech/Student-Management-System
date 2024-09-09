@@ -1,0 +1,106 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Load Bootstrap CSS from static files -->
+    <link rel="stylesheet" href="{% static 'enroll/css/bootstrap.css' %}">
+    <!-- Load jQuery and Bootstrap JS from static files -->
+    <script src="{% static 'enroll/js/jquery.js' %}"></script>
+    <script src="{% static 'enroll/js/bootstrap.js' %}"></script>
+    <title>Register</title>
+</head>
+
+<body class="bg-white">
+    <div class="container d-flex justify-content-center align-items-center py-5">
+        <div class="row w-100 justify-content-center">
+            <div class="col-md-6 col-lg-4">
+                <div class="bg-white rounded shadow p-4">
+                    <h2 class="text-center bg-primary text-white p-3 mb-4 rounded">Register</h2>
+
+                    <!-- Message div for showing feedback messages, hidden by default -->
+                    <div id="message" class="alert alert-info" style="display:none;"></div>
+
+                    <!-- Registration form -->
+                    <form id="registrationForm" method="post">
+                        {% csrf_token %} <!-- CSRF token for form security -->
+                        <input type="hidden" id="stuid" value=""> <!-- Hidden field for storing student ID -->
+                        
+                        <!-- Name input field -->
+                        <div class="form-group">
+                            <label for="nameid">Name</label>
+                            <input type="text" class="form-control mb-3" id="nameid" required>
+                        </div>
+
+                        <!-- Email input field -->
+                        <div class="form-group">
+                            <label for="emailid">Email</label>
+                            <input type="email" class="form-control mb-3" id="emailid" required>
+                        </div>
+
+                        <!-- Password input field -->
+                        <div class="form-group">
+                            <label for="passwordid">Password</label>
+                            <input type="password" class="form-control mb-3" id="passwordid" required>
+                        </div>
+
+                        <!-- Submit button -->
+                        <button type="button" id="btnsave" class="btn btn-primary btn-block md-3">Register</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Function to show message and fade it out after 3 seconds
+        function showMessage(message) {
+            $('#message').text(message).show().delay(3000).fadeOut();
+        }
+
+        // Event handler for the 'Register' button
+        $("#btnsave").click(function () {
+            let sid = $('#stuid').val();  // Get student ID (if any)
+            let nm = $('#nameid').val();  // Get entered name
+            let em = $('#emailid').val();  // Get entered email
+            let pw = $('#passwordid').val();  // Get entered password
+            let csr = $("input[name=csrfmiddlewaretoken]").val();  // Get CSRF token
+
+            // Validate if the fields are filled
+            if (nm == "") {
+                showMessage("Please Enter Name");
+            } else if (em == "") {
+                showMessage("Please Enter Email");
+            } else if (pw == "") {
+                showMessage("Please Enter Password");
+            } else {
+                // Create data object to send via AJAX
+                let mydata = { stuid: sid, name: nm, email: em, password: pw, csrfmiddlewaretoken: csr };
+                
+                // AJAX request to save data
+                $.ajax({
+                    url: "{% url 'save' %}",  // URL to submit the form data (save view)
+                    method: "POST",  // POST request
+                    data: mydata,  // Data to be sent (form fields)
+                    dataType: "json",  // Expecting a JSON response
+                    success: function (data) {
+                        // Handle success response
+                        if (data.status == "Save") {
+                            showMessage("Form Submitted Successfully");
+                            $('#stuid').val('');  // Clear the hidden student ID field
+                            $("form")[0].reset();  // Reset the form fields
+                        } else if (data.status == 0) {
+                            showMessage("Unable to Save Form");  // Show error message
+                            $('#stuid').val('');
+                            $("form")[0].reset();
+                        }
+                    },
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>

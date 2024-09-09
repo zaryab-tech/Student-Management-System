@@ -1,0 +1,110 @@
+<script>
+    // Function to show a message and fade it out after a delay
+    function showMessage(message) {
+        $('#message').text(message).show().delay(2500).fadeOut(); 
+    }
+
+    // Event handler for the save button click
+    $("#btnsave").click(function () {
+        // Collecting input values from the form
+        let sid = $('#stuid').val(); 
+        let nm = $('#nameid').val(); 
+        let em = $('#emailid').val(); 
+        let pw = $('#passwordid').val(); 
+        let csr = $("input[name=csrfmiddlewaretoken]").val(); // CSRF token for security
+
+        // Input validation
+        if (nm == "") {
+            showMessage("Please Enter Name"); 
+        } else if (em == "") {
+            showMessage("Please Enter Email"); 
+        } else if (pw == "") {
+            showMessage("Please Enter Password"); 
+        } else {
+            // Prepare data for submission
+            let mydata = { stuid: sid, name: nm, email: em, password: pw, csrfmiddlewaretoken: csr };
+            $.ajax({
+                url: "{% url 'save' %}", // URL for saving data
+                method: "POST", 
+                data: mydata, 
+                dataType: "json",
+                success: function (data) {
+                    let d = data.student_data; // Extract student data from response
+                    let output = ""; // Initialize output string for table rows
+                    if (data.status == "Save") {
+                        showMessage("Form Submitted Successfully"); 
+                        // Loop through student data and create table rows
+                        for (let i = 0; i < d.length; i++) {
+                            output +=
+                                "<tr><td>" + d[i].id +
+                                "</td><td>" + d[i].name +
+                                "</td><td>" + d[i].email +
+                                "</td><td>" + d[i].password +
+                                "</td><td><input type='button' class='btn btn-warning btn-sm btn-edit' value='Edit' data-sid=" + d[i].id + ">" +
+                                "<input type='button' class='btn btn-danger btn-sm btn-del' value='Delete' data-sid=" + d[i].id + "></td></tr>";
+                        }
+                        $("#tbody").html(output); // Update table body with new rows
+                        $('#stuid').val(''); // Clear student ID field
+                        $("form")[0].reset(); // Reset the form fields
+                    } else if (data.status == 0) {
+                        showMessage("Unable to Save Form"); // Show error message if save fails
+                        $('#stuid').val(''); // Clear student ID field
+                        $("form")[0].reset(); // Reset the form fields
+                    }
+                },
+            });
+        }
+    });
+
+    // Event handler for deleting data
+    $("tbody").on("click", ".btn-del", function () {
+        let id = $(this).attr("data-sid"); // Get the student ID from the button's data attribute
+        let csr = $("input[name=csrfmiddlewaretoken]").val(); // CSRF token for security
+        let mydata = { sid: id, csrfmiddlewaretoken: csr }; // Prepare data for deletion
+        let mythis = this; // Reference to the current button
+        $.ajax({
+            url: "{% url 'delete' %}", // URL for deleting data
+            method: "POST", 
+            data: mydata, 
+            success: function (data) {
+                if (data.status == 1) {
+                    showMessage("Data Deleted Successfully"); // Show success message
+                    let d = data.student_data; // Extract updated student data from response
+                    let output = ""; // Initialize output string for table rows
+                    // Loop through student data and create table rows
+                    for (let i = 0; i < d.length; i++) {
+                        output +=
+                            "<tr><td>" + d[i].id +
+                            "</td><td>" + d[i].name +
+                            "</td><td>" + d[i].email +
+                            "</td><td>" + d[i].password +
+                            "</td><td><input type='button' class='btn btn-warning btn-sm btn-edit' value='Edit' data-sid=" + d[i].id + ">" +
+                            "<input type='button' class='btn btn-danger btn-sm btn-del' value='Delete' data-sid=" + d[i].id + "></td></tr>";
+                    }
+                    $("#tbody").html(output); // Update table body with new rows
+                } else if (data.status == 0) {
+                    showMessage("Unable to Delete Data"); // Show error message if deletion fails
+                }
+            },
+        });
+    });
+
+    // Event handler for editing data
+    $("tbody").on("click", ".btn-edit", function () {
+        let id = $(this).attr("data-sid"); // Get the student ID from the button's data attribute
+        let csr = $("input[name=csrfmiddlewaretoken]").val(); // CSRF token for security
+        let mydata = { sid: id, csrfmiddlewaretoken: csr }; // Prepare data for editing
+        $.ajax({
+            url: "{% url 'edit' %}", // URL for editing data
+            method: "POST", 
+            data: mydata, 
+            success: function (data) {
+                // Populate the form fields with the retrieved data
+                $("#stuid").val(data.id);
+                $("#nameid").val(data.name);
+                $("#emailid").val(data.email);
+                $("#passwordid").val(data.password);
+            },
+        });
+    });
+</script>

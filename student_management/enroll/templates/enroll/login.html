@@ -1,0 +1,46 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Load Bootstrap CSS from static files -->
+    <link rel="stylesheet" href="{% static 'enroll/css/bootstrap.css' %}">
+    <title>Login</title>
+</head>
+
+<body class="bg-light">
+    <div class="container d-flex justify-content-center align-items-center py-5 h-100">
+        <div class="row w-100 justify-content-center">
+            <div class="col-md-6 col-lg-4">
+                <div class="bg-white rounded shadow p-4">
+                    <h2 class="text-center bg-primary text-white p-3 mb-4 rounded">Login</h2>
+                    
+                    <!-- Login form -->
+                    <form method="post">
+                        {% csrf_token %} <!-- CSRF token for form security -->
+                        
+                        <!-- Username field -->
+                        <div class="form-group">
+                            <label for="username">Username</label>
+                            <input type="text" class="form-control mb-3" id="username" name="username"
+                                placeholder="Enter username" required>
+                        </div>
+
+                        <!-- Password field -->
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input type="password" class="form-control mb-3" id="password" name="password"
+                                placeholder="Password" required>
+                        </div>
+
+                        <!-- Submit button -->
+                        <button type="submit" class="btn btn-primary btn-block mb-3">Login</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

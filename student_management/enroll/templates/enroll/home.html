@@ -1,0 +1,186 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'enroll/css/bootstrap.css' %}" />
+    <title>Student Registration</title>
+    <style>
+        .header {
+            background-color: #007bff; /* Bootstrap primary color */
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <div class="d-flex justify-content-between align-items-center my-4 header">
+            <h2>Student Management</h2>
+            <form method="POST" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-light">Logout</button>
+            </form>
+        </div>
+
+        <!-- Add/Update Student Form -->
+        <div class="row">
+            <div class="col-md-6">
+                <h2>Add New Student</h2>
+                <form id="studentForm">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <input type="hidden" id="stuid" name="stuid">
+                    <button type="submit" id="btnsave" class="btn btn-primary">Add/Update Student</button>
+                </form>
+            </div>
+        </div>
+
+        <br>
+
+        <!-- Student Information Table -->
+        <h2>Student Information</h2>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Password</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="tbody">
+                {% for student in stu %}
+                <tr>
+                    <td>{{ student.id }}</td>
+                    <td>{{ student.name }}</td>
+                    <td>{{ student.email }}</td>
+                    <td>{{ student.password }}</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm btn-edit" data-sid="{{ student.id }}">Edit</button>
+                        <button class="btn btn-danger btn-sm btn-del" data-sid="{{ student.id }}">Delete</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script src="{% static 'enroll/js/jquery.js' %}"></script>
+    <script src="{% static 'enroll/js/bootstrap.js' %}"></script>
+    <script>
+        // Function to show a message and fade it out after a delay
+        function showMessage(message) {
+            $('#message').text(message).show().delay(3000).fadeOut();
+        }
+
+        // Event handler for the save button click
+        $("#btnsave").click(function () {
+            // Collecting input values from the form
+            let sid = $('#stuid').val();
+            let nm = $('#nameid').val(); 
+            let em = $('#emailid').val(); 
+            let pw = $('#passwordid').val(); 
+            let csr = $("input[name=csrfmiddlewaretoken]").val(); // CSRF token for security
+
+            // Input validation
+            if (nm == "") {
+                showMessage("Please Enter Name");
+            } else if (em == "") {
+                showMessage("Please Enter Email");
+            } else if (pw == "") {
+                showMessage("Please Enter Password"); 
+            } else {
+                // Prepare data for submission
+                let mydata = { stuid: sid, name: nm, email: em, password: pw, csrfmiddlewaretoken: csr };
+                $.ajax({
+                    url: "{% url 'save' %}", // URL for saving data
+                    method: "POST",
+                    data: mydata, 
+                    dataType: "json",
+                    success: function (data) {
+                        let d = data.student_data; // Extract student data from response
+                        let output = ""; // Initialize output string for table rows
+                        if (data.status == "Save") {
+                            showMessage("Form Submitted Successfully");
+                            // Loop through student data and create table rows
+                            for (let i = 0; i < d.length; i++) {
+                                output +=
+                                    "<tr><td>" + d[i].id +
+                                    "</td><td>" + d[i].name +
+                                    "</td><td>" + d[i].email +
+                                    "</td><td>" + d[i].password +
+                                    "</td><td><button class='btn btn-warning btn-sm btn-edit' data-sid=" + d[i].id + ">Edit</button>" +
+                                    "<button class='btn btn-danger btn-sm btn-del' data-sid=" + d[i].id + ">Delete</button></td></tr>";
+                            }
+                            $("#tbody").html(output); // Update table body with new rows
+                            $('#stuid').val(''); // Clear student ID field
+                            $("form")[0].reset(); // Reset the form fields
+                        } else if (data.status == 0) {
+                            showMessage("Unable to Save Form");
+                            $('#stuid').val(''); // Clear student ID field
+                            $("form")[0].reset(); // Reset the form fields
+                        }
+                    },
+                });
+            }
+        });
+
+        // Event handler for deleting data
+        $("tbody").on("click", ".btn-del", function () {
+            let id = $(this).attr("data-sid"); // Get the student ID from the button's data attribute
+            let csr = $("input[name=csrfmiddlewaretoken]").val(); // CSRF token for security
+            let mydata = { sid: id, csrfmiddlewaretoken: csr }; // Prepare data for deletion
+            let mythis = this; // Reference to the current button
+            $.ajax({
+                url: "{% url 'delete' %}", // URL for deleting data
+                method: "POST", 
+                data: mydata, 
+                success: function (data) {
+                    if (data.status == 1) {
+                        showMessage("Data Deleted Successfully"); // Show success message
+                        let d = data.student_data; // Extract updated student data from response
+                        let output = ""; // Initialize output string for table rows
+                        // Loop through student data and create table rows
+                        for (let i = 0; i < d.length; i++) {
+                            output +=
+                                "<tr><td>" + d[i].id +
+                                "</td><td>" + d[i].name +
+                                "</td><td>" + d[i].email +
+                                "</td><td>" + d[i].password +
+                                "</td><td><button class='btn btn-warning btn-sm btn-edit' data-sid=" + d[i].id + ">Edit</button>" +
+                                "<button class='btn btn-danger btn-sm btn-del' data-sid=" + d[i].id + ">Delete</button></td></tr>";
+                        }
+                        $("#tbody").html(output); // Update table body with new rows
+                    } else if (data.status == 0) {
+                        showMessage("Unable to Delete Data");
+                    }
+                },
+            });
+        });
+
+        // Event handler for editing data
+        $("tbody").on("click", ".btn-edit", function () {
+            let id = $(this).attr("data-sid"); // Get the student ID from the button's data attribute
+            let csr = $("input[name=csrfmiddlewaretoken]").val(); // CSRF token for security
+            let mydata = { sid: id, csrfmiddlewaretoken: csr }; // Prepare data for editing
+            $.ajax({
+                url: "{% url 'edit' %}", // URL for editing data
+                method: "POST",
+                data: mydata, 
+                success: function (data) {
+                    // Populate the form fields with the retrieved data
+                    $("#stuid").val(data.id);
+                    $("#nameid").val(data.name);
+                    $("#emailid").val(data.email);
+                    $("#passwordid").val(data.password);
+                },
+            });
+        });
+    </script>
+</body>
+</html>
