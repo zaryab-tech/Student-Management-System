@@ -51,6 +51,8 @@ student_management/
    - User registration, login, and logout functionalities.
 
 ##Setup Instructions:
+Download and install VS code and install Python (any version) .....
+
 1- Create a virtual environment and activate it:
 
  python -m venv venv
